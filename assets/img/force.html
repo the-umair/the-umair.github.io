@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+       
+    </style>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://d3js.org/d3-selection-multi.v1.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container" id = "container">
+    </div>
+    <script type="text/javascript">
+        containerClass = ".container"
+        var height = 500,
+            width = 500;
+      
+        //value is for line width and distance is for link distance for two nodes
+        var data = {
+            "nodes": [{
+                    "id": "a",
+                    "textURL": "https://www.w3.org/TR/PNG/iso_8859-1.txt",
+                    "pdfURL": "http://www.africau.edu/images/default/sample.pdf",
+                    "imageURL": "https://www.bittbox.com/wp-content/uploads/2009/02/public_domain_astronomy_1.jpg",
+                    "documentURL": "http://writing.engr.psu.edu/workbooks/formal_report_template.doc",
+                    "selected": "None Selected"
+                },
+                {
+                    "id": "b",
+                    "textURL": "B textURL",
+                    "pdfURL": "B pdfURL",
+                    "imageURL": "B imageURL",
+                    "documentURL": "B documentURL",
+                    "selected": "None Selected"
+                },
+                {
+                    "id": "c",
+                    "textURL": "C textURL",
+                    "pdfURL": "C pdfURL",
+                    "imageURL": "C imageURL",
+                    "documentURL": "C documentURL",
+                    "selected": "None Selected"
+
+                },
+                {
+                    "id": "a1",
+                    "textURL": "https://www.w3.org/TR/PNG/iso_8859-1.txt",
+                    "pdfURL": "http://www.africau.edu/images/default/sample.pdf",
+                    "imageURL": "https://www.bittbox.com/wp-content/uploads/2009/02/public_domain_astronomy_1.jpg",
+                    "documentURL": "http://writing.engr.psu.edu/workbooks/formal_report_template.doc",
+                    "selected": "None Selected"
+                },
+                {
+                    "id": "b1",
+                    "textURL": "B textURL",
+                    "pdfURL": "B pdfURL",
+                    "imageURL": "B imageURL",
+                    "documentURL": "B documentURL",
+                    "selected": "None Selected"
+                },
+                {
+                    "id": "c1",
+                    "textURL": "C textURL",
+                    "pdfURL": "C pdfURL",
+                    "imageURL": "C imageURL",
+                    "documentURL": "C documentURL",
+                    "selected": "None Selected"
+
+                },
+            ],
+            "links": [{
+                    "source": "a",
+                    "target": "b",
+                    "value": 2,
+                    "distance": 100
+                },
+                {
+                    "source": "b",
+                    "target": "c",
+                    "value": 2,
+                    "distance": 100
+                },
+                {
+                    "source": "c",
+                    "target": "a",
+                    "value": 2,
+                    "distance": 100
+                },
+            ]
+        }
+        var selectedNodeArray = [];
+
+        function forcedDirectedComponent(containerClass, height, width, data, ) {
+
+            var tooltipHeight = 200;
+            var tooltipWidth = 200;
+            var selectedNode = "";
+            
+            width = document.getElementById('container').offsetWidth/2;
+            height = width;
+            //debugger;
+            // Define the div for the tooltip
+            var div = d3.select(containerClass).append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0)
+                .style("position", "absolute")
+                .style("opacity", "center")
+                .style("width", tooltipHeight+"px")
+                .style("height", tooltipWidth+"px")
+                .style("padding", "2px")
+                .style("border", "1px")
+                .style("overflow", "scroll")
+                .style("max-height",tooltipHeight+"px")
+                .style("max-width",tooltipWidth+"px")
+                .style("border-radius", "3px")
+                .style("font-size", "10px")
+                .style("border-color", "black")
+                .style("border-style", "solid")
+                .style("pointer-events", "none");
+
+            $('<div class="row" id="parentRow"> <div class="col-sm-6" style="border-right-style: solid;border-right-width: 2px;border-right-color: rgb(155, 163, 167);"> <div class="row" style="text-align:center"> <h4>Graph</h4> </div> <div class="row" style="text-align:center"><svg class="svgClass" height='+ height +' width='+width+'></svg></div> </div> <div class="col-sm-6" > <div class="row" style="text-align:center"> <h4>Detail</h4> </div> <div class="row"> <div class="content"  style ="overflow:scroll"> <!-- <iframe id="iframeId" src="/pdf/test.pdf" style="width:100%;height:700px;"></iframe> --> </div> </div> </div> </div> <div class="row"> <div class="col-sm-6" style="text-align: center"> <button class="btn btn-warning undoForce">Undo</button> </div> <div class="col-sm-6" style="text-align: center"> <button class="btn btn-success submitForce"> Submit </button> </div> </div> <div class="row nodeList"> </div>')
+                .appendTo(containerClass);
+            var heightTemp = document.getElementById('parentRow').offsetHeight;
+            d3.select('.content')
+            .attr('style','height:'+(heightTemp-50)+'px;overflow:auto');
+            $(".undoForce").click(event => {
+                console.log("Undo");
+                if (undoNodes.length > 0) {
+                    filteredNodes.push(undoNodes.pop());
+                    if(undoLinks.length > 0)
+                        filteredLinks = filteredLinks.concat(undoLinks.pop());
+                    // debugger;
+                    update(filteredNodes, filteredLinks);
+                }
+            });
+            $(".submitForce").click(event => {
+                console.log(event);
+                console.log("Submit");
+                console.log(filteredNodes);
+                var selected = "";
+                var selectedNodes = [];
+                filteredNodes.forEach((element, index) => {
+                        selectedNodes.push(element.id);
+                        if (index == filteredNodes.length - 1) {
+                            selected = selected + " " + element.selected
+                        } else if (index == 0) {
+                            selected = element.selected
+                        } else {
+                            selected = selected + " and " + element.selected
+                        }
+                });
+                if (selected == "") {
+                    $(".nodeList").empty();
+                    $('<div style="text-align:center">No Nodes are selected' + selected + '</div>').appendTo(
+                        ".nodeList");
+                } else {
+                    $(".nodeList").empty();
+                    $('<div style="text-align:center">Selected Nodes are ' + selected + '</div>').appendTo(
+                        ".nodeList");
+                }
+                selectedNodeArray = [];
+                selectedNodeArray = Object.assign(selectedNodes);
+                console.log(selectedNodeArray);
+                console.log(selectedNodes);
+                $(".nodeList").empty();
+                $('<div style="text-align:center">Selected Nodes are ' + selectedNodes.join(" and ") + '</div>')
+                    .appendTo(
+                        ".nodeList");
+            });
+
+
+
+            color = function () {
+                const scale = d3.scaleOrdinal(d3.schemeCategory10);
+                return d => scale(d.group);
+            }
+            drag = simulation => {
+
+                function dragstarted(d) {
+                    if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+                    d.fx = d.x;
+                    d.fy = d.y;
+                }
+
+                function dragged(d) {
+                    d.fx = d3.event.x;
+                    d.fy = d3.event.y;
+                }
+
+                /*  function dragended(d) {
+                   if (!d3.event.active) simulation.alphaTarget(0);
+                   d.fx = null;
+                   d.fy = null;
+                 }
+                  */
+                return d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged);
+                /* .on("end", dragended) */
+                // ;
+            }
+            const links = data.links.map(d => Object.create(d));
+            // debugger;
+            const nodes = data.nodes.map(d => Object.create(d));
+
+            const svg = d3.select(".svgClass");
+            var filteredNodes = Object.assign(nodes);
+            var filteredLinks = Object.assign(links);
+            var undoNodes = [];
+            var undoLinks = [];
+            update(filteredNodes, filteredLinks);
+
+            function update(nodes, links) {
+
+                svg.selectAll("*").remove();
+                svg.append('defs').append('marker')
+                    .attrs({
+                        'id': 'arrowhead',
+                        'viewBox': '-0 -5 10 10',
+                        'refX': 23,
+                        'refY': 0,
+                        'orient': 'auto',
+                        'markerWidth': 10,
+                        'markerHeight': 10,
+                        'xoverflow': 'visible'
+                    })
+                    .append('svg:path')
+                    .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+                    .attr('fill', '#999')
+                    .style('stroke', 'none');
+                const simulation = d3.forceSimulation(nodes)
+                    .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.distance))
+                    .force("charge", d3.forceManyBody().strength(-1))
+
+                    .force("center", d3.forceCenter(width / 2, height / 2));
+                const link = svg.append("g")
+                    .attr("stroke", "#000")
+                    .attr("stroke-opacity", 0.9)
+                    .selectAll("line")
+                    .data(links)
+                    .join("line")
+                    .attr("stroke-width", d => Math.sqrt(d.value))
+                    .attr('marker-end', 'url(#arrowhead)');
+
+                link.exit()
+                    .remove();
+
+                const edgepaths = svg.selectAll(".edgepath")
+                    .data(links)
+                    .enter()
+                    .append('path')
+                    .attrs({
+                        'class': 'edgepath',
+                        'fill-opacity': 0,
+                        'stroke-opacity': 0,
+                        'id': function (d, i) {
+                            return 'edgepath' + i
+                        }
+                    })
+                    .style("pointer-events", "none");
+                const r = 20
+                const node = svg.append("svg")
+                    .attr("stroke", "#fff")
+                    .attr("stroke-width", 1.5)
+                    .selectAll("svg")
+                    .data(nodes)
+                    .join("svg")
+                    .attr("width", 100)
+                    .attr("height", 100)
+                    .attr("fill", color)
+                    .call(drag(simulation));
+
+
+
+                node.append("circle")
+                    .attr("r", r)
+                    .attr("fill", "red")
+                    .attr("class", "main")
+                    .attr("cx", r)
+                    .attr("cy", r)
+                    .attr("stroke", "white")
+                    .attr("stroke-width", 1)
+                    .on("click", function (d) {
+                        console.log("Circle click main" + d.id);
+                        //d3.select(".main"+d.id).attr("fill","green");
+
+                    });
+                node.append("circle")
+                    .attr("cx", r)
+                    .attr("cy", r / 2)
+                    .attr("r", r / 2)
+                    .attr("class", "top")
+                    .attr("stroke", "red")
+                    .attr("stroke-width", 1)
+                    .attr("fill", function (d) {
+                        // debugger
+                        if (d.selected == d.textURL) {
+                            return "green"
+                        } else {
+                            return "white"
+                        }
+                    })
+                    .on("click", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+                        //     if (d.id == id) {
+                        //         d3.select(this).attr("fill", "green");
+                        //     } else {
+                        //         d3.select(this).attr("fill", "blue");
+                        //     }
+                        // })
+                        d3.select('.content')
+                        .attr('style','height:'+(heightTemp-50)+'px;overflow:auto');
+                        if (d.selected == d.textURL) {
+                            d3.select(this).attr("fill", "white");
+                            d.selected = "None Selected";
+                            $(".content").empty();
+                        } else {
+                            d3.select(this).attr("fill", "green");
+                            d.selected = d.textURL;
+                            selectedNode = d.id;
+                            $(".content").empty();
+                            //$('<div style="text-align:center">' + d.textURL + '</div>').appendTo(".content");
+                            $(".content").load(d.textURL);
+                            unselect(d.id, "top");
+                        }
+
+                        console.log("Circle click 1" + d.id);
+                    })
+                    .on("mouseover", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+                        //     if (d.id == id) {
+                        //         d3.select(this).attr("fill", "green");
+                        //     } else {
+                        //         d3.select(this).attr("fill", "blue");
+                        //     }
+                        // })
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.textURL + '</div>').appendTo(".content");
+                        // if (d.selected == d.textURL) {
+
+                        // } else {
+
+                        //d.selected = d.textURL;
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.textURL + '</div>').appendTo(".content");
+                        // $(".content").load(d.textURL);
+                        div.transition()
+                            .duration(200)
+                            .style("opacity", 1)
+                            .style("background", "#fff")
+                            ;
+                        div.html('<div style="text-align:center">'+'</div>')
+                            .style("left", (d3.event.pageX+20) + "px")
+                            .style("top", (d3.event.pageY-100) + "px");
+                        $(".tooltip").load(d.textURL);
+                        // }
+                        console.log("Circle click 1" + d.id);
+                    })
+                    .on("mouseout", function (d) {
+                        //id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+
+                        //         d3.select(this).attr("fill", "blue");
+
+                        // })
+                        //$(".content").empty();
+                        // $('<div style="text-align:center">' + d.textURL + '</div>').appendTo(".content");
+                        // $(".content").empty();
+                        div.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                        console.log("Circle click 1" + d.id);
+                    });
+
+                function unselect(id, selected) {
+                   // debugger;
+
+                    d3.selectAll(".top").each(function (d, i) {
+                        if (d.id != id) {
+                            d3.select(this).attr("fill", "white");
+                        }
+                        else{
+                            if (selected != "top") {
+                                d3.select(this).attr("fill", "white");
+                            }
+                        }
+                            
+                        
+                    })
+                    d3.selectAll(".left").each(function (d, i) {
+                        if (d.id != id) {
+                            d3.select(this).attr("fill", "white");
+                        }
+                        else{
+                            if (selected != "left") {
+                                d3.select(this).attr("fill", "white");
+                            }
+                        }
+                    })
+                    d3.selectAll(".right").each(function (d, i) {
+                        if (d.id != id) {
+                            d3.select(this).attr("fill", "white");
+                        }
+                        else{
+                            if (selected != "right") {
+                                d3.select(this).attr("fill", "white");
+                            }
+                        }
+                    })
+                    d3.selectAll(".rect").each(function (d, i) {
+                        if (d.id != id) {
+                            d3.select(this).attr("fill", "blue");
+                        }
+                        else{
+                            if (selected != "rect") {
+                                d3.select(this).attr("fill", "blue");
+                            }
+                        }
+                    })
+                }
+                node.append("circle")
+                    .attr("cx", r)
+                    .attr("cy", r + r / 2)
+                    .attr("r", r / 2)
+                    .attr("stroke", "red")
+                    .attr("stroke-width", 1)
+                    .attr("fill", "white")
+                    .on("click", function (d) {
+                        filteredNodes = nodes.filter(function (value, index, arr) {
+                            if (value.id == d.id) {
+                                undoNodes.push(value);
+                            }
+                            return value.id != d.id;
+                        });
+                        var temp = []
+                        filteredLinks = links.filter(function (value, index, arr) {
+                            // debugger;
+
+                            if (value.source.index == d.index || value.target.index == d.index) {
+                                temp.push(value);
+                            }
+                            return value.source.index != d.index && value.target.index != d.index;
+                        });
+                        if (temp.length > 0) {
+
+                            undoLinks.push(temp);
+                        }
+                        // debugger;
+                        update(filteredNodes, filteredLinks);
+                        // console.log(filtered);
+                    });
+                node.append("circle")
+                    .attr("cx", r / 2)
+                    .attr("cy", r)
+                    .attr("r", r / 2)
+                    .attr("class", "left")
+                    .attr("stroke", "red")
+                    .attr("stroke-width", 1)
+                    .attr("fill", function (d) {
+                        if (d.selected == d.imageURL) {
+                            return "green"
+                        } else {
+                            2
+                            return "white"
+                        }
+                    })
+                    .on("click", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+                        //     if (d.id == id) {
+                        //         d3.select(this).attr("fill", "green");
+                        //     } else {
+                        //         d3.select(this).attr("fill", "blue");
+                        //     }
+                        // })
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.imageURL + '</div>').appendTo(".content");
+                        d3.select('.content')
+                        .attr('style','height:'+(heightTemp-50)+'px;overflow:auto');
+                        if (d.selected == d.imageURL) {
+                            d3.select(this).attr("fill", "white");
+                            d.selected = "None Selected";
+                            $(".content").empty();
+                        } else {
+                            d3.select(this).attr("fill", "green");
+                            d.selected = d.imageURL;
+                            selectedNode = d.id;
+                            $(".content").empty();
+                            $('<div style="text-align:center">' + d.imageURL + '</div>').appendTo(".content");
+                            $('<img src=' + d.imageURL + ' alt="Image" width="500" height="600">').appendTo(
+                                ".content")
+                            unselect(d.id, "left");
+                        }
+                        console.log("Circle click 3" + d.id);
+                    })
+                    .on("mouseover", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+                        //     if (d.id == id) {
+                        //         d3.select(this).attr("fill", "green");
+                        //     } else {
+                        //         d3.select(this).attr("fill", "blue");
+                        //     }
+                        // })
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.imageURL + '</div>').appendTo(".content");
+                        // if (d.selected == d.imageURL) {
+
+                        // } else {
+
+                        //d.selected = d.textURL;
+                        div.transition()
+                            .duration(200)
+                            .style("opacity", 1);
+                        div.html('<img src=' + d.imageURL + ' alt="Image" width='+tooltipWidth+' height='+tooltipHeight+'>')
+                            .style("left", (d3.event.pageX+20) + "px")
+                            .style("top", (d3.event.pageY-100) + "px");
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.imageURL + '</div>').appendTo(".content");
+                        // $('<img src=' + d.imageURL + ' alt="Image" width="500" height="600">').appendTo(".content")
+                        // }
+
+                        console.log("Circle click 1" + d.id);
+                    })
+                    .on("mouseout", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+
+                        //         d3.select(this).attr("fill", "blue");
+
+                        // })
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.textURL + '</div>').appendTo(".content");
+                        //$(".content").empty();
+                        div.transition()
+                            .duration(200)
+                            .style("opacity", 0);
+                        console.log("Circle click 1" + d.id);
+                    });
+                node.append("circle")
+                    .attr("cx", r + r / 2)
+                    .attr("cy", r)
+                    .attr("r", r / 2)
+                    .attr("stroke", "red")
+                    .attr("class", "right")
+                    .attr("stroke-width", 1)
+                    .attr("fill", function (d) {
+                        if (d.selected == d.pdfURL) {
+                            return "green"
+                        } else {
+                            return "white"
+                        }
+                    })
+                    .on("click", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+                        //     if (d.id == id) {
+                        //         d3.select(this).attr("fill", "green");
+                        //     } else {
+                        //         d3.select(this).attr("fill", "blue");
+                        //     }
+                        // })
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.pdfURL + '</div>').appendTo(".content");
+                        d3.select('.content')
+                        .attr('style','height:'+(heightTemp-50)+'px;overflow:none');
+                        console.log("Circle click 4" + d.id);
+                        if (d.selected == d.pdfURL) {
+                            d3.select(this).attr("fill", "white");
+                            d.selected = "None Selected";
+                            $(".content").empty();
+                        } else {
+                            d3.select(this).attr("fill", "green");
+                            d.selected = d.pdfURL;
+                            selectedNode = d.id;
+                            $(".content").empty();
+                            let temppdf = ""
+                            temppdf = "http://docs.google.com/gview?url=" + d.pdfURL + "&embedded=true";
+                            $('<div style="text-align:center">' + d.pdfURL + '</div>').appendTo(".content");
+                            $('<iframe src=' + d.pdfURL +
+                                ' style="width:600px; height:500px;" frameborder="0"></iframe>').appendTo(
+                                ".content")
+                            // $('<div style="text-align:center">' + d.pdfURL + '</div>');
+                            unselect(d.id, "right");
+                        }
+                    })
+                    .on("mouseover", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+                        //     if (d.id == id) {
+                        //         d3.select(this).attr("fill", "green");
+                        //     } else {
+                        //         d3.select(this).attr("fill", "blue");
+                        //     }
+                        // })
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.pdfURL + '</div>').appendTo(".content");
+                        // if (d.selected == d.pdfURL) {
+
+                        // } else {
+
+                        //d.selected = d.pdfURL;
+                       // $(".content").empty();
+                        var temppdf = ""
+                        temppdf = "http://docs.google.com/gview?url=" + d.pdfURL + "&embedded=true";
+                        //$('<div style="text-align:center">' + d.pdfURL + '</div>').appendTo(".content");
+                        div.transition()
+                            .duration(200)
+                            .style("opacity", 1)
+                            .style("background", "#fff")
+                            ;
+                        div.html('<iframe src=' + d.pdfURL +
+                            ' "width:'+(tooltipWidth-20)+'px; height:'+tooltipHeight +'px;" frameborder="0" style="width:200px"></iframe>')
+                            .style("left", (d3.event.pageX+20) + "px")
+                            .style("width",tooltipWidth+"px")
+                            .style("top", (d3.event.pageY-100) + "px");
+                        // $('<iframe src=' + d.pdfURL +
+                        //     ' style="width:600px; height:500px;" frameborder="0"></iframe>').appendTo(
+                        //     ".content")
+                        //                    }
+
+                        console.log("Circle click 1" + d.id);
+                    })
+                    .on("mouseout", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+
+                        //         d3.select(this).attr("fill", "blue");
+
+                        // })
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.textURL + '</div>').appendTo(".content");
+                        //$(".content").empty();
+                        div.transition()
+                            .duration(200)
+                            .style("opacity", 0)
+                            .style("background", "#fff")
+                            ;
+                        console.log("Circle click 1" + d.id);
+                    });
+                node.append("rect")
+                    .attr("x", r / 2)
+                    .attr("y", r / 2)
+                    .attr("width", r)
+                    .attr("height", r)
+                    .attr("class", "rect")
+                    .attr("stroke", "red")
+                    .attr("stroke-width", 1)
+                    .attr("fill", function (d) {
+                        if (d.selected == d.documentURL) {
+                            return "green"
+                        } else {
+                            return "blue"
+                        }
+                    })
+                    .on("click", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+                        //     if (d.id == id) {
+                        //         d3.select(this).attr("fill", "green");
+                        //     } else {
+                        //         d3.select(this).attr("fill", "blue");
+                        //     }
+                        // })
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.documentURL + '</div>').appendTo(".content");
+                        d3.select('.content')
+                        .attr('style','height:'+(heightTemp-50)+'px;overflow:none');
+                        if (d.selected == d.documentURL) {
+                            d3.select(this).attr("fill", "blue");
+                            d.selected = "None Selected";
+                            $(".content").empty();
+                        } else {
+                            d3.select(this).attr("fill", "green");
+                            d.selected = d.documentURL;
+                            selectedNode = d.id;
+                            $(".content").empty();
+                            let temppdf = ""
+                            temppdf = "https://docs.google.com/gview?url=" + d.documentURL + "&embedded=true";
+                            //$('<div style="text-align:center">' + d.documentURL + '</div>').appendTo(".content");
+                            $('<iframe  class ="doc" src=' + temppdf +
+                                ' style="width:600px; height:500px;" frameborder="0"></iframe>').appendTo(
+                                ".content")
+                            //$('<iframe class="doc" src="https://docs.google.com/gview?url=http://writing.engr.psu.edu/workbooks/formal_report_template.doc&embedded=true" style="width:600px; height:500px;"></iframe> ' ).appendTo(".content");
+                            unselect(d.id, "rect");
+                        }
+                        console.log("Rect click" + d.id);
+                    })
+                    .on("mouseover", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+                        //     if (d.id == id) {
+                        //         d3.select(this).attr("fill", "green");
+                        //     } else {
+                        //         d3.select(this).attr("fill", "blue");
+                        //     }
+                        // })
+                        // $(".content").empty();
+                        // $('<div style="text-align:center">' + d.documentURL + '</div>').appendTo(".content");
+                        // if (d.selected == d.documentURL) {
+
+                        // } else {
+
+                        //d.selected = d.pdfURL;
+                       // $(".content").empty();
+                        //$('<div style="text-align:center">' + d.documentURL + '</div>').appendTo(".content");
+                        let temppdf = ""
+                        temppdf = "https://docs.google.com/gview?url=" + d.documentURL + "&embedded=true";
+                        //$('<div style="text-align:center">' + d.documentURL + '</div>').appendTo(".content");
+                        div.transition()
+                            .duration(200)
+                            .style("opacity", 1)
+                            .style("background", "#fff");
+                        div.html('<iframe  class ="doc" src=' + temppdf +
+                            ' style="width:'+tooltipWidth+'px; height:'+tooltipHeight +'px;" frameborder="0"></iframe>')
+                            .style("left", (d3.event.pageX+20) + "px")
+                            .style("top", (d3.event.pageY-100) + "px");
+                        // $('<iframe  class ="doc" src=' + temppdf +
+                        //     ' style="width:600px; height:500px;" frameborder="0"></iframe>').appendTo(
+                        //     ".content")
+                        //$('<iframe class="doc" src="https://docs.google.com/gview?url=http://writing.engr.psu.edu/workbooks/formal_report_template.doc&embedded=true " style="width:600px; height:500px;"></iframe>').appendTo(".content");
+                        //}
+
+                        console.log("Circle click 1" + d.id);
+                    })
+                    .on("mouseout", function (d) {
+                        // id = d.id;
+                        // d3.selectAll(".main").each(function (d, i) {
+
+                        //         d3.select(this).attr("fill", "blue");
+
+                        // })
+                        // $(".content").empty();
+                        // // $('<div style="text-align:center">' + d.textURL + '</div>').appendTo(".content");
+                        //$(".content").empty();
+                        div.transition()
+                            .duration(200)
+                            .style("opacity", 0)
+                            .style("background", "#fff");
+                        console.log("Circle click 1" + d.id);
+                    });
+                node.append("title")
+                    .text(d => d.id);
+                node.append("text")
+                    .attr("x", r * 2)
+                    .attr("y", r * 2)
+                    // .attr("dy",-3)
+                    .attr("stroke", "grey")
+                    .text(function (d) {
+                        return d.id;
+                    });
+
+                node.exit()
+                    .remove();
+                simulation.on("tick", () => {
+                    link
+                        .attr("x1", function (d) {
+                            if (d.source.x > width - 20) {
+                                return width - 40 - r;
+                            } else if (d.source.x < 0) {
+                                return 0 + r;
+                            } else {
+                                return d.source.x
+                            }
+                        })
+                        .attr("y1", function (d) {
+                            if (d.source.y > width - 20) {
+                                return width - 40 - r;
+                            } else if (d.source.y < 0) {
+                                return 0 + r;
+                            } else {
+                                return d.source.y
+                            }
+                        })
+                        .attr("x2", function (d) {
+                            if (d.target.x > width - 20) {
+                                return width - 40 - r;
+                            } else if (d.target.x < 0) {
+                                return 0 + r;
+                            } else {
+                                return d.target.x
+                            }
+                        })
+                        .attr("y2", function (d) {
+                            if (d.target.y > width - 20) {
+                                return width - 40 - r;
+                            } else if (d.target.y < 0) {
+                                return 0 + r;
+                            } else {
+                                return d.target.y
+                            }
+                        });
+                    node
+                        .attr("x", function (d) {
+                            if ((d.x - r) > width-20) {
+                                return width - 20 - r
+                            } else if ((d.x - r) < 0) {
+                                return 0;
+                            } else {
+                                return (d.x - r);
+                            }
+                        })
+                        .attr("y", function (d) {
+                            if ((d.y - r) > height - 20) {
+                                return height - 40 - r
+                            } else if ((d.y - r) < 0) {
+                                return 0;
+                            } else {
+                                return (d.y - r);
+                            }
+                        });
+                    // node.attr("transform", (d) => {
+                    //     return "translate(" + (d.x < 10 ? dx = 10 : d.x > 90 ? d.x = 90 : d.x) + "," + (
+                    //         d.y < 10 ? d.y = 10 : d.y > 90 ? d.y = 90 : d.y) + ")"
+                    // })
+                    // node.select(".main")
+                    // .attr("cx", d => d.x)
+                    //     .attr("cy", d => d.y);
+                });
+            }
+
+
+        }
+        forcedDirectedComponent(containerClass, height, width, data);
+        invalidation.then(() => simulation.stop());
+    </script>
+</body>
+
+</html>
